@@ -9,14 +9,12 @@ session_start();
 |--------------------------------------------------------------------------
 | DATABASE CONFIG
 |--------------------------------------------------------------------------
-| Replace these values with your Render/MySQL credentials
-|--------------------------------------------------------------------------
 */
 
-define('DB_HOST', 'YOUR_DATABASE_HOST');
-define('DB_NAME', 'YOUR_DATABASE_NAME');
-define('DB_USER', 'YOUR_DATABASE_USER');
-define('DB_PASS', 'YOUR_DATABASE_PASSWORD');
+define('DB_HOST', 'sql12.freesqldatabase.com');
+define('DB_NAME', 'sql12827512');
+define('DB_USER', 'sql12827512');
+define('DB_PASS', 'Y9nmZYbl2N');
 define('DB_PORT', 3306);
 
 /*
@@ -38,4 +36,5 @@ if ($conn->connect_error) {
 }
 
 $conn->set_charset("utf8mb4");
+
 ?>
