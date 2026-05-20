@@ -1,8 +1,11 @@
 <?php
 session_start();
-require_once __DIR__ . '/app/Report.php';
-require_once __DIR__ . '/app/ServiceRequest.php';
-require_once __DIR__ . '/app/helpers.php';
+
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/Report.php';
+require_once __DIR__ . '/ServiceRequest.php';
+require_once __DIR__ . '/helpers.php';
+
 require_login();
 
 $user = current_user();
@@ -23,10 +26,13 @@ if (isset($_POST['html'])) {
     $note = 'A browser-ready report was prepared and saved in the exports folder.';
 }
 
-$requests = $isRecipient ? ServiceRequest::all((int) $user['id']) : ServiceRequest::all(null, $user['role']);
+$requests = $isRecipient
+    ? ServiceRequest::all((int) $user['id'])
+    : ServiceRequest::all(null, $user['role']);
 
 ob_start();
 ?>
+
 <section class="page-head reveal slide-right">
     <div>
         <span class="eyebrow"><?= $isRecipient ? 'My Records' : 'Records Office' ?></span>
@@ -52,43 +58,67 @@ ob_start();
                 <a href="exports/xml_report.html" target="_blank">Open formatted XML view</a>
                 <a href="exports/requests.xml" target="_blank">Open saved XML source</a>
             <?php endif; ?>
+
             <?php if ($actionType === 'html'): ?>
                 <a href="exports/report.html" target="_blank">Open saved HTML report</a>
             <?php endif; ?>
-            <p class="muted export-path">Saved inside: <code>public/exports/</code></p>
+
+            <p class="muted export-path">Saved inside: <code>exports/</code></p>
         </div>
     <?php endif; ?>
 </section>
 
 <section class="panel reveal fade-up">
     <h2><?= $isRecipient ? 'Personal Aid List' : 'Aid Records' ?></h2>
+
     <div class="table-wrap">
         <table class="records-table report-table">
             <thead>
                 <tr>
-                    <?php if (!$isRecipient): ?><th>Recipient</th><?php endif; ?>
-                    <th>Category</th><th>Need</th><th>Urgency</th><th>Location</th><th>Description</th><th>Status</th><th>Date</th>
+                    <?php if (!$isRecipient): ?>
+                        <th>Recipient</th>
+                    <?php endif; ?>
+
+                    <th>Category</th>
+                    <th>Need</th>
+                    <th>Urgency</th>
+                    <th>Location</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Date</th>
                 </tr>
             </thead>
+
             <tbody>
                 <?php foreach ($requests as $request): ?>
                     <tr>
-                        <?php if (!$isRecipient): ?><td><?= e($request['fullname']) ?></td><?php endif; ?>
-                        <td><?= e($request['category']) ?></td>
+                        <?php if (!$isRecipient): ?>
+                            <td><?= e($request['fullname'] ?? '') ?></td>
+                        <?php endif; ?>
+
+                        <td><?= e($request['category'] ?? '') ?></td>
                         <td><?= e($request['quantity'] ?? 'Not specified') ?></td>
                         <td><span class="status urgency"><?= e($request['urgency'] ?? 'Medium') ?></span></td>
-                        <td><?= e($request['location']) ?></td>
+                        <td><?= e($request['location'] ?? '') ?></td>
                         <td class="description-cell"><?= e($request['description'] ?? '') ?></td>
-                        <td><span class="status"><?= e($request['status']) ?></span></td>
-                        <td><?= e($request['created_at']) ?></td>
+                        <td><span class="status"><?= e($request['status'] ?? '') ?></span></td>
+                        <td><?= e($request['created_at'] ?? '') ?></td>
                     </tr>
                 <?php endforeach; ?>
-                <?php if (!$requests): ?><tr><td colspan="<?= $isRecipient ? 7 : 8 ?>">No records available.</td></tr><?php endif; ?>
+
+                <?php if (!$requests): ?>
+                    <tr>
+                        <td colspan="<?= $isRecipient ? 7 : 8 ?>">No records available.</td>
+                    </tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
 </section>
+
 <?php
 $content = ob_get_clean();
 $title = 'Reports - AidLink';
+
 require __DIR__ . '/layout.php';
+?>
