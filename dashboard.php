@@ -1,11 +1,13 @@
 <?php
 session_start();
-require_once __DIR__ . '/../app/ServiceRequest.php';
-require_once __DIR__ . '/../app/Queue.php';
-require_once __DIR__ . '/../app/helpers.php';
+
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/ServiceRequest.php';
+require_once __DIR__ . '/Queue.php';
+require_once __DIR__ . '/helpers.php';
+
 require_login();
 refresh_current_user();
-
 $user = current_user();
 $isRecipient = $user['role'] === 'citizen';
 $requests = $isRecipient ? ServiceRequest::all((int) $user['id']) : ServiceRequest::all(null, $user['role']);
