@@ -1,8 +1,8 @@
 <?php
 session_start();
-require_once __DIR__ . '/../app/ServiceRequest.php';
-require_once __DIR__ . '/../app/Queue.php';
-require_once __DIR__ . '/../app/helpers.php';
+require_once __DIR__ . '/app/ServiceRequest.php';
+require_once __DIR__ . '/app/Queue.php';
+require_once __DIR__ . '/app/helpers.php';
 require_login();
 
 $user = current_user();
