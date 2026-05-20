@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once __DIR__ . '/../app/User.php';
-require_once __DIR__ . '/../app/helpers.php';
+require_once __DIR__ . '/app/User.php';
+require_once __DIR__ . '/app/helpers.php';
 require_login();
 
 $user = User::find((int) current_user()['id']) ?: current_user();
