@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Auth.php';
 
@@ -13,13 +14,12 @@ class User
         return $user ?: null;
     }
 
-
     private static function ensureSecurityPlainColumn(): void
     {
         try {
             Database::connect()->exec('ALTER TABLE users ADD COLUMN security_answer_plain TEXT NULL');
         } catch (Throwable $exception) {
-            // Column already exists or the database user cannot alter it. Existing features continue to work.
+            // Column already exists or database user cannot alter it.
         }
     }
 
@@ -33,6 +33,7 @@ class User
     public static function revealSecurityAnswer(int $id, string $currentPassword): string
     {
         self::ensureSecurityPlainColumn();
+
         $user = self::find($id);
 
         if (!$user || !password_verify($currentPassword, $user['password'])) {
@@ -74,7 +75,14 @@ class User
         $statement = Database::connect()->prepare(
             'INSERT INTO users (fullname, email, phone, password, role) VALUES (?, ?, ?, ?, ?)'
         );
-        $statement->execute([$fullname, $email, $phone, password_hash($password, PASSWORD_DEFAULT), $role]);
+
+        $statement->execute([
+            $fullname,
+            $email,
+            $phone,
+            password_hash($password, PASSWORD_DEFAULT),
+            $role
+        ]);
     }
 
     public static function updateTheme(int $id, string $theme): void
@@ -91,6 +99,7 @@ class User
     public static function updateProfile(int $id, string $fullname, string $phone, string $theme): void
     {
         $current = self::find($id);
+
         Auth::validateProfile($fullname, $current['email'] ?? 'account@example.com', $phone);
 
         if (!in_array($theme, ['dark', 'light'], true)) {
@@ -100,13 +109,14 @@ class User
         $statement = Database::connect()->prepare(
             'UPDATE users SET fullname = ?, phone = ?, theme = ? WHERE id = ?'
         );
+
         $statement->execute([$fullname, $phone, $theme, $id]);
     }
-
 
     public static function updateSecurityQuestion(int $id, string $question, string $answer, string $currentPassword): void
     {
         self::ensureSecurityPlainColumn();
+
         $user = self::find($id);
 
         if (!$user || !password_verify($currentPassword, $user['password'])) {
@@ -146,8 +156,14 @@ class User
             throw new InvalidArgumentException('New password must contain at least 6 characters.');
         }
 
-        $statement = Database::connect()->prepare('UPDATE users SET password = ? WHERE id = ?');
-        $statement->execute([password_hash($newPassword, PASSWORD_DEFAULT), $id]);
+        $statement = Database::connect()->prepare(
+            'UPDATE users SET password = ? WHERE id = ?'
+        );
+
+        $statement->execute([
+            password_hash($newPassword, PASSWORD_DEFAULT),
+            $id
+        ]);
     }
 
     public static function updateAvatar(int $id, array $file): ?string
@@ -164,21 +180,28 @@ class User
             throw new InvalidArgumentException('Profile photo must be 2MB or smaller.');
         }
 
-        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $extension = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
 
         if (!in_array($extension, $allowed, true)) {
             throw new InvalidArgumentException('Profile photo must be JPG, PNG, or WEBP.');
         }
 
+        $uploadDir = __DIR__ . '/uploads/avatars/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
         $filename = 'avatar_' . $id . '_' . time() . '.' . $extension;
-        $destination = __DIR__ . '/../public/uploads/avatars/' . $filename;
+        $destination = $uploadDir . $filename;
 
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
             throw new InvalidArgumentException('Unable to save the uploaded photo.');
         }
 
         $path = 'uploads/avatars/' . $filename;
+
         Database::connect()
             ->prepare('UPDATE users SET avatar = ? WHERE id = ?')
             ->execute([$path, $id]);
@@ -194,12 +217,14 @@ class User
             Database::connect()
                 ->prepare('UPDATE users SET avatar = NULL WHERE id = ?')
                 ->execute([$id]);
+
             return;
         }
 
         $relativePath = (string) $user['avatar'];
-        $fullPath = realpath(__DIR__ . '/../public/' . $relativePath);
-        $avatarRoot = realpath(__DIR__ . '/../public/uploads/avatars');
+
+        $fullPath = realpath(__DIR__ . '/' . $relativePath);
+        $avatarRoot = realpath(__DIR__ . '/uploads/avatars');
 
         if ($fullPath && $avatarRoot && str_starts_with($fullPath, $avatarRoot) && is_file($fullPath)) {
             @unlink($fullPath);
@@ -209,5 +234,4 @@ class User
             ->prepare('UPDATE users SET avatar = NULL WHERE id = ?')
             ->execute([$id]);
     }
-
 }
