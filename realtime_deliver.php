@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/Messenger.php';
+require_once __DIR__ . '/app/Messenger.php';
 
 header('Content-Type: application/json');
 
