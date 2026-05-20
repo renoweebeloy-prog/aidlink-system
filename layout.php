@@ -1,8 +1,11 @@
 <?php
-require_once __DIR__ . '/../app/helpers.php';
-require_once __DIR__ . '/../app/Notification.php';
-require_once __DIR__ . '/../app/Messenger.php';
-$config = require __DIR__ . '/../app/config.php';
+require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/Notification.php';
+require_once __DIR__ . '/Messenger.php';
+
+$config = require __DIR__ . '/config.php';
+
+
 $user = current_user();
 $theme = $user['theme'] ?? ($_COOKIE['aidlink_theme'] ?? 'dark');
 $navItems = [
