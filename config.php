@@ -1,40 +1,16 @@
 <?php
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+$host = "sql7.freesqldatabase.com";
+$dbname = "sql7827516";
+$username = "sql7827516";
+$password = "l8ruxRN4qW";
+$port = 3306;
 
-session_start();
-
-/*
-|--------------------------------------------------------------------------
-| DATABASE CONFIG
-|--------------------------------------------------------------------------
-*/
-
-define('DB_HOST', 'sql12.freesqldatabase.com');
-define('DB_NAME', 'sql12827512');
-define('DB_USER', 'sql12827512');
-define('DB_PASS', 'Y9nmZYbl2N');
-define('DB_PORT', 3306);
-
-/*
-|--------------------------------------------------------------------------
-| DATABASE CONNECTION
-|--------------------------------------------------------------------------
-*/
-
-$conn = new mysqli(
-    DB_HOST,
-    DB_USER,
-    DB_PASS,
-    DB_NAME,
-    DB_PORT
-);
+$conn = new mysqli($host, $username, $password, $dbname, $port);
 
 if ($conn->connect_error) {
-    die("Database Connection Failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
 }
 
 $conn->set_charset("utf8mb4");
-
 ?>
