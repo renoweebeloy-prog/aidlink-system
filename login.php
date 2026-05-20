@@ -8,14 +8,23 @@ require_once __DIR__ . '/helpers.php';
 $error = '';
 $registerError = '';
 $registerSuccess = '';
-$success = isset($_GET['created']) ? 'Account created successfully. You may now sign in.' : '';
-$mode = ($_GET['mode'] ?? '') === 'register' ? 'register' : 'login';
+
+$success = isset($_GET['created'])
+    ? 'Account created successfully. You may now sign in.'
+    : '';
+
+$mode = ($_GET['mode'] ?? '') === 'register'
+    ? 'register'
+    : 'login';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     if (isset($_POST['register_account'])) {
+
         $mode = 'register';
 
         try {
+
             Auth::register(
                 trim($_POST['fullname'] ?? ''),
                 trim($_POST['register_email'] ?? ''),
@@ -24,16 +33,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
             $registerSuccess = 'Account created successfully. You can now sign in using your new account.';
+
         } catch (Throwable $exception) {
+
             $registerError = $exception->getMessage();
         }
+
     } else {
+
         $mode = 'login';
 
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
 
         if (Auth::login($email, $password)) {
+
             redirect('dashboard.php');
         }
 
@@ -43,28 +57,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ob_start();
 ?>
+
 <section class="auth-card auth-slider reveal <?= $mode === 'register' ? 'show-register' : '' ?>" id="authSlider">
+
     <div class="auth-hero auth-pane">
-        <span class="eyebrow auth-eyebrow"><span class="auth-label-login">Community Platform</span><span class="auth-label-register">New Recipient</span></span>
+
+        <span class="eyebrow auth-eyebrow">
+            <span class="auth-label-login">Community Platform</span>
+            <span class="auth-label-register">New Recipient</span>
+        </span>
+
         <h1>AidLink</h1>
-        <p class="auth-copy auth-copy-login">Welcome back. Sign in to manage aid requests, messages, queues, and community updates.</p>
-        <p class="auth-copy auth-copy-register">Join AidLink as a recipient and start submitting aid requests with real-time updates.</p>
+
+        <p class="auth-copy auth-copy-login">
+            Welcome back. Sign in to manage aid requests, messages,
+            queues, and community updates.
+        </p>
+
+        <p class="auth-copy auth-copy-register">
+            Join AidLink as a recipient and start submitting aid requests
+            with real-time updates.
+        </p>
+
     </div>
 
     <div class="auth-form-panel auth-pane">
+
+        <!-- LOGIN FORM -->
         <form class="auth-form auth-login-form" method="POST" autocomplete="off">
+
             <h2>Sign in</h2>
+
             <?php if (current_user()): ?>
+
                 <div class="notice-box">
+
                     Signed in as <?= e(current_user()['fullname']) ?>.
+
                     <div class="auth-actions">
-                        <a class="small-button" href="dashboard.php">Continue</a>
-                        <a class="small-button secondary" href="logout.php">Logout</a>
+                        <a class="small-button" href="dashboard.php">
+                            Continue
+                        </a>
+
+                        <a class="small-button secondary" href="logout.php">
+                            Logout
+                        </a>
                     </div>
+
                 </div>
+
             <?php endif; ?>
-            <?php if ($success): ?><div class="success-box"><?= e($success) ?></div><?php endif; ?>
-            <?php if ($error): ?><div class="error-box"><?= e($error) ?></div><?php endif; ?>
+
+            <?php if ($success): ?>
+                <div class="success-box"><?= e($success) ?></div>
+            <?php endif; ?>
+
+            <?php if ($error): ?>
+                <div class="error-box"><?= e($error) ?></div>
+            <?php endif; ?>
 
             <label>Email
                 <input type="email" name="email" autocomplete="off" required>
@@ -74,13 +124,25 @@ ob_start();
                 <input type="password" name="password" autocomplete="new-password" required>
             </label>
 
-            <button class="button" type="submit">Sign in</button>
-            <a class="muted-link" href="forgot_password.php">Forgot password?</a>
-            <button class="muted-link auth-switch" type="button" data-auth-switch="register">Create recipient account</button>
+            <button class="button" type="submit">
+                Sign in
+            </button>
+
+            <a class="muted-link" href="forgot_password.php">
+                Forgot password?
+            </a>
+
+            <button class="muted-link auth-switch" type="button" data-auth-switch="register">
+                Create recipient account
+            </button>
+
         </form>
 
+        <!-- REGISTER FORM -->
         <form class="auth-form auth-register-form" method="POST" autocomplete="off">
+
             <input type="hidden" name="register_account" value="1">
+
             <h2>Create Account</h2>
 
             <?php if ($registerSuccess): ?>
@@ -107,32 +169,65 @@ ob_start();
                 <input type="password" name="register_password" required>
             </label>
 
-            <button class="button" type="submit">Create Account</button>
-            <button class="muted-link auth-switch" type="button" data-auth-switch="login">Return to sign in</button>
+            <button class="button" type="submit">
+                Create Account
+            </button>
+
+            <button class="muted-link auth-switch" type="button" data-auth-switch="login">
+                Return to sign in
+            </button>
+
         </form>
+
     </div>
+
+    <!-- DEVELOPED BY -->
+    <p class="developer-credit">
+        Developed @ Mark Bryan Aguimod
+    </p>
+
 </section>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
     const slider = document.getElementById('authSlider');
 
     document.querySelectorAll('[data-auth-switch]').forEach(function (button) {
+
         button.addEventListener('click', function () {
+
             const mode = button.getAttribute('data-auth-switch');
 
             if (mode === 'register') {
+
                 slider.classList.add('show-register');
-                history.replaceState(null, '', 'login.php?mode=register');
+
+                history.replaceState(
+                    null,
+                    '',
+                    'login.php?mode=register'
+                );
+
             } else {
+
                 slider.classList.remove('show-register');
-                history.replaceState(null, '', 'login.php');
+
+                history.replaceState(
+                    null,
+                    '',
+                    'login.php'
+                );
             }
         });
     });
 });
 </script>
+
 <?php
 $content = ob_get_clean();
+
 $title = 'Login - AidLink';
+
 require __DIR__ . '/layout.php';
+?>
