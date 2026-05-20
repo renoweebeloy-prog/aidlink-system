@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once __DIR__ . '/../app/Auth.php';
-require_once __DIR__ . '/../app/helpers.php';
+require_once __DIR__ . '/app/Auth.php';
+require_once __DIR__ . '/app/helpers.php';
 
 $error = '';
 $success = '';
