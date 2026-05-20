@@ -1,0 +1,66 @@
+AIDLINK RABBITMQ TWO-QUEUE GUIDE
+
+This version separates RabbitMQ into TWO different queues:
+
+1. aidlink_coordination_queue
+   Purpose:
+   - Stores coordination queue events.
+   - Example: new aid request received, status update notice.
+   - This queue counts up whenever AidLink creates a coordination event.
+   - It counts down when admin/staff clicks Acknowledge in Coordination Queue.
+
+2. aidlink_request_status_queue
+   Purpose:
+   - Tracks active aid requests only.
+   - One active aid request = one RabbitMQ message.
+   - Changing status from Pending -> Approved -> Preparing -> Delivering does NOT add duplicates.
+   - AidLink consumes/replaces the previous active message and publishes the latest status.
+   - When the request becomes Completed or Rejected, the active message is consumed and removed from RabbitMQ.
+
+WHY TWO QUEUES?
+The coordination queue is for activity notices and acknowledgements.
+The request status queue is for active work that is still not finished.
+
+EXPECTED BEHAVIOR
+
+Example:
+1. Recipient submits one aid request.
+   aidlink_coordination_queue = +1
+   aidlink_request_status_queue = +1
+
+2. Admin acknowledges the coordination queue notice.
+   aidlink_coordination_queue = -1
+   aidlink_request_status_queue stays 1
+
+3. Admin changes Pending -> Approved -> Preparing -> Delivering.
+   aidlink_coordination_queue gets a new notice for each update.
+   aidlink_request_status_queue stays 1 because it only tracks the active request.
+
+4. Admin changes status to Completed or Rejected.
+   aidlink_coordination_queue gets a status update notice.
+   aidlink_request_status_queue becomes 0 because the request is finished.
+
+IMPORTANT:
+MySQL remains the permanent system record.
+RabbitMQ is only the active asynchronous queue demo.
+
+HOW TO OPEN RABBITMQ
+1. Enable management plugin:
+
+   rabbitmq-plugins enable rabbitmq_management
+
+2. Open:
+
+   http://localhost:15672
+
+3. Login:
+
+   guest
+   guest
+
+4. Check these queues:
+   - aidlink_coordination_queue
+   - aidlink_request_status_queue
+
+DEBUG LOG:
+   aidlink/storage/rabbitmq.log

@@ -1,0 +1,8 @@
+AIDLINK AUTH BADGE CLEAN FIX
+
+Changed only the login/signup badge text:
+- Login shows: Community Platform
+- Signup shows: New Recipient
+- Removed the weird combined '/ New Recipient' label.
+
+No RabbitMQ, WebSocket, messenger, database, or feature logic was touched.

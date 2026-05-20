@@ -1,0 +1,31 @@
+AIDLINK RABBITMQ + WEBSOCKET FINAL FIX
+
+Fixed:
+1. receiver_id was missing from RabbitMQ messenger payload.
+2. Browser was not registering logged-in user ID to the WebSocket server.
+3. WebSocket consumer thought receiver was offline, so queue never counted down.
+4. Consumer now supports direct and group chat receiver_ids.
+
+Correct flow:
+Sender sends message
+-> MySQL saves permanent message
+-> RabbitMQ receives delivery event
+-> WebSocket server checks if receiver is online
+-> If receiver is offline: queue remains READY
+-> If receiver is online: delay runs, WebSocket pushes message, RabbitMQ ACKs/removes queue
+
+Change delay:
+realtime/websocket_server.js
+
+Edit:
+const DELAY_MS = 3000;
+
+Start:
+cd C:\xampp\htdocs\aidlink\realtime
+npm install
+node websocket_server.js
+
+Important:
+Keep the CMD window open.
+Open receiver account in another browser/incognito.
+The receiver must be logged in so their browser registers to WebSocket.

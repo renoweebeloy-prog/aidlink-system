@@ -1,0 +1,33 @@
+WHY MESSENGER WAS NOT SHOWING IN RABBITMQ
+
+The previous version had realtime/WebSocket files, but Messenger.php was still only saving messages to MySQL.
+This version patches Messenger::send() so every sent message is also published to:
+
+aidlink_messenger_queue
+
+RabbitMQ queues:
+1. aidlink_coordination_queue
+2. aidlink_request_status_queue
+3. aidlink_messenger_queue
+
+How to demo:
+1. Start RabbitMQ.
+2. Enable management:
+   rabbitmq-plugins enable rabbitmq_management
+3. Open:
+   http://localhost:15672
+4. Login:
+   guest / guest
+5. Start realtime relay:
+   cd aidlink/realtime
+   npm install
+   node websocket_server.js
+6. Send a message in AidLink.
+7. Check queue:
+   aidlink_messenger_queue
+
+Delay setting:
+aidlink/realtime/websocket_server.js
+
+Edit:
+const DELAY_MS = 2500;

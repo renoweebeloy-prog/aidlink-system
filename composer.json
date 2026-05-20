@@ -1,0 +1,7 @@
+{
+    "name": "aidlink/rabbitmq-backup",
+    "description": "AidLink RabbitMQ-enabled backup version for ITP 121 messaging demonstration.",
+    "require": {
+        "php-amqplib/php-amqplib": "^3.7"
+    }
+}

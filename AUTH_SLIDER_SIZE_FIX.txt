@@ -1,0 +1,8 @@
+AIDLINK AUTH SLIDER SIZE FIX
+
+Changed:
+- Login/signup card size adjusted for 100% Chrome zoom.
+- Form padding and input height reduced slightly.
+- AidLink hero panel now has separate descriptions for login and signup mode.
+- Sliding animation remains the same.
+- No RabbitMQ/WebSocket/messenger/system features were touched.

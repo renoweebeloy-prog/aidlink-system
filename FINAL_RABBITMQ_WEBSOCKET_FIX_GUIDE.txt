@@ -1,0 +1,35 @@
+AIDLINK FINAL RABBITMQ + WEBSOCKET FIX
+
+What was wrong:
+1. Old RabbitMQ messages had no receiver_id.
+2. The Node consumer kept requeueing those invalid messages forever.
+3. Browser user registration was not guaranteed.
+4. RabbitMQ could show Unacked/Total but never count down.
+
+What is fixed:
+1. Messenger.php now publishes receiver_id and receiver_ids.
+2. app.js registers the logged-in user to WebSocket.
+3. websocket_server.js drops old invalid messages instead of looping forever.
+4. Direct and group chat receiver detection is supported.
+5. If receiver is online, WebSocket waits DELAY_MS, pushes message, then ACKs RabbitMQ.
+6. If receiver is offline, valid message returns to Ready queue.
+
+IMPORTANT CLEANUP:
+Before testing, open RabbitMQ Management and purge aidlink_messenger_queue once.
+This removes old broken messages that had no receiver_id.
+
+RabbitMQ:
+http://localhost:15672
+guest / guest
+
+Queue:
+aidlink_messenger_queue
+
+Start:
+cd C:\xampp\htdocs\aidlink\realtime
+npm install
+node websocket_server.js
+
+Change delay:
+realtime/websocket_server.js
+const DELAY_MS = 3000;

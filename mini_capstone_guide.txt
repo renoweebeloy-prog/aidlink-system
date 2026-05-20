@@ -1,0 +1,64 @@
+AIDLINK MINI-CAPSTONE GUIDE
+
+Suggested Title:
+AidLink: A Messaging-Based Donation and Volunteer Coordination System
+
+CHAPTER 1 - INTRODUCTION
+1.1 Rationale
+Many communities experience delays and confusion when coordinating donations, volunteers, and assistance requests. Manual coordination through scattered messages can make it difficult to track who requested help, what items are needed, who is assigned, and whether assistance has already been delivered. AidLink addresses this problem by providing a local web-based system for managing aid requests, volunteer coordination, notifications, messaging, and reports.
+
+1.2 Purpose and Description
+AidLink is designed to help community members submit aid requests while coordinators and volunteers manage assistance records through a structured workflow. The system includes request tracking, messaging, notifications, XML reports, weather reference, regex utilities, and local automation scripts.
+
+1.3 General Objective
+To develop a messaging-based donation and volunteer coordination system that supports organized aid request management, communication, and reporting.
+
+1.4 Specific Objectives
+- To allow recipients to submit aid requests with category, need, urgency, location, and description.
+- To allow coordinators to update request status and remarks.
+- To provide direct and group messaging for aid coordination.
+- To generate XML and HTML reports for aid request records.
+- To integrate weather reference, regex utilities, and local scripts for operational support.
+
+1.5 Scope and Limitation
+The system is intended for local deployment using PHP, MySQL, and XAMPP. It supports account management, aid requests, messaging, notifications, weather lookup, XML/HTML reports, and local scripts. The system does not process real online payments, real SMS delivery, or national-level logistics tracking.
+
+1.6 Significance of the Study
+Recipients may benefit from easier request submission and tracking. Coordinators may benefit from organized records and queue handling. Volunteers may benefit from clearer communication and task updates. Future student developers may use the project as an example of integrating messaging, XML, scripting, API, and database modules.
+
+CHAPTER 2 - METHODOLOGY
+2.1 Requirement Specification
+Functional Requirements:
+- User registration and login.
+- Aid request submission.
+- Request status update.
+- Messaging and group conversation.
+- Notifications and sound alerts.
+- XML and HTML report generation.
+- Weather lookup and regex scanner.
+- Profile settings and password recovery.
+
+Non-Functional Requirements:
+- Usable on local XAMPP environment.
+- Responsive interface with dark/light theme.
+- Secure password hashing.
+- Organized PHP files and reusable classes.
+- Clear output for demonstration and defense.
+
+2.2 System Analysis
+Business Process:
+Recipient submits aid request -> Coordinator reviews -> Queue event is created -> Volunteer/coordinator communicates through messenger -> Request status is updated -> Recipient receives notification -> Reports are exported.
+
+Use Case Actors:
+- Recipient
+- Volunteer Coordinator
+- Administrator
+
+Recommended Demo Flow:
+1. Login as recipient and submit aid request.
+2. Login as admin/coordinator and update request status.
+3. Show notification received by recipient.
+4. Send a message through Messenger.
+5. Export XML and HTML reports.
+6. Use weather and regex tools.
+7. Show scripts folder and explain automation.

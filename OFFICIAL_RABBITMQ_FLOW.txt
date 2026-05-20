@@ -1,0 +1,39 @@
+
+OFFICIAL AIDLINK RABBITMQ FLOW
+
+FLOW:
+
+Sender sends message
+↓
+Message saved in MySQL
+↓
+RabbitMQ receives delivery event
+↓
+IF receiver ONLINE:
+    WebSocket consumer gets RabbitMQ message
+    ↓
+    WebSocket pushes to receiver
+    ↓
+    Receiver UI displays the message
+↓
+IF receiver OFFLINE:
+    Queue remains READY
+    Message still stored in MySQL
+↓
+Receiver logs in later
+↓
+System loads old messages from MySQL
+
+CHANGE MESSAGE DELAY:
+Open:
+realtime/websocket_server.js
+
+Edit:
+const DELAY_MS = 3000;
+
+3000 = 3 seconds
+
+START WEBSOCKET:
+cd realtime
+npm install
+node websocket_server.js

@@ -1,0 +1,14 @@
+QUICK START
+
+1. Copy aidlink folder to C:\xampp\htdocs\aidlink
+2. Import database/aidlink.sql in phpMyAdmin
+3. Visit http://localhost/aidlink/index.php
+
+Accounts:
+Admin: admin@aidlink.local / admin123
+Coordinator: staff@aidlink.local / admin123
+Recipient: recipient@aidlink.local / admin123
+
+
+RABBITMQ BACKUP VERSION
+For RabbitMQ demo, read RABBITMQ_GUIDE.txt. Run composer install, then php scripts/rabbitmq_consumer.php.

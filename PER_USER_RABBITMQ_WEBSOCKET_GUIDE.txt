@@ -1,0 +1,28 @@
+AIDLINK PER-USER RABBITMQ WEBSOCKET FIX
+
+This fixes the queue countdown stopping after several messages.
+
+Old design: one shared queue named aidlink_messenger_queue.
+Problem: offline/old messages could block the shared queue.
+
+New design: one queue per receiver:
+aidlink_messenger_queue_user_1
+aidlink_messenger_queue_user_4
+aidlink_messenger_queue_user_5
+
+Flow:
+Sender sends message -> MySQL saves message -> PHP publishes to receiver personal RabbitMQ queue -> if receiver online, WebSocket consumes that receiver queue after DELAY_MS -> message appears -> queue ACKs/counts down.
+
+If receiver offline, no consumer touches that receiver queue, so it stays READY until the receiver logs in.
+
+Before testing, you may purge/delete old shared queue: aidlink_messenger_queue.
+Use the new per-user queue in RabbitMQ Management.
+
+Start:
+cd C:\xampp\htdocs\aidlink\realtime
+npm install
+node websocket_server.js
+
+Change delay:
+realtime/websocket_server.js
+const DELAY_MS = 3000;

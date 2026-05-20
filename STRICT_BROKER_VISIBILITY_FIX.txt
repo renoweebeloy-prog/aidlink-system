@@ -1,0 +1,31 @@
+AIDLINK STRICT BROKER MESSAGE VISIBILITY FIX
+
+Problem:
+Messages were saved in MySQL and immediately shown to the receiver even when WebSocket was off.
+
+Fixed:
+- chat_messages now has delivered_at column.
+- Sender can see own message immediately.
+- Receiver can only see the message after WebSocket consumes RabbitMQ and marks it delivered.
+- If WebSocket server is OFF, RabbitMQ queue stays Ready and receiver does not see the new message yet.
+- Once WebSocket is ON and receiver is online, RabbitMQ is consumed, delivered_at is updated, and the receiver sees it.
+
+Flow:
+Sender sends message
+-> MySQL saves message with delivered_at = NULL
+-> RabbitMQ receives message in receiver's queue
+-> If receiver online and WebSocket running:
+   delay
+   mark delivered_at
+   push to receiver
+   ACK RabbitMQ
+-> If WebSocket off:
+   message remains hidden to receiver
+   RabbitMQ queue stays Ready
+
+Important:
+If your project folder is not named aidlink, edit realtime/websocket_server.js and update:
+http://localhost/aidlink/public/realtime_deliver.php
+
+Example if folder is aidlink1:
+http://localhost/aidlink1/public/realtime_deliver.php

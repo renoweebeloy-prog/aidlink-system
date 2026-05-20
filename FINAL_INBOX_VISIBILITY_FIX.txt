@@ -1,0 +1,20 @@
+AIDLINK FINAL INBOX VISIBILITY FIX
+
+Problem:
+Receiver could not see the message in the chat thread before WebSocket delivery, but the left inbox preview and unread badge still showed the undelivered message.
+
+Fixed:
+- Messenger inbox preview now only shows:
+  1. the user's own sent messages, or
+  2. incoming messages already marked delivered by WebSocket.
+- Messenger unread count now only counts delivered incoming messages.
+- If WebSocket is OFF, the receiver will not see:
+  - the new chat bubble
+  - inbox preview update
+  - unread badge
+  - messenger count
+until WebSocket consumes RabbitMQ and marks the message delivered.
+
+No RabbitMQ queue logic was changed.
+No WebSocket queue logic was changed.
+Only Messenger.php display/count queries were fixed.

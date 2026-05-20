@@ -1,0 +1,23 @@
+AIDLINK FINAL BROWSER DELIVERY CONFIRMATION FIX
+
+What was wrong:
+- RabbitMQ/WebSocket pushed the event and played sound, but delivered_at was not updated correctly.
+- Because delivered_at stayed NULL, the receiver could hear sound but the message/count did not appear.
+
+Fixed:
+- The receiver browser now confirms delivery by calling:
+  public/realtime_deliver.php
+- After delivery is confirmed, the page reloads and the message/count appears.
+- This avoids hard-coded folder-name bugs like /aidlink vs /aidlink1.
+
+Flow:
+1. Sender sends message.
+2. MySQL saves message with delivered_at NULL.
+3. RabbitMQ stores message in receiver queue.
+4. WebSocket pushes to receiver.
+5. Receiver browser marks delivered_at using realtime_deliver.php.
+6. Receiver reloads and sees message/count.
+
+If WebSocket is off:
+- RabbitMQ queue stays Ready.
+- Receiver does not see message yet.

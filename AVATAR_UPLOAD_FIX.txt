@@ -1,0 +1,13 @@
+AIDLINK AVATAR UPLOAD FIX
+
+Problem:
+The uploads/avatars folder did not exist.
+
+Result:
+move_uploaded_file failed.
+
+Fixed:
+- User.php now auto-creates uploads/avatars
+- uploads/avatars folder already included
+- RabbitMQ/WebSocket system untouched
+- Messenger features untouched
