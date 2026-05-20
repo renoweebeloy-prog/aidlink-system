@@ -1,16 +1,21 @@
 <?php
 
-$host = "sql7.freesqldatabase.com";
-$dbname = "sql7827516";
-$username = "sql7827516";
-$password = "l8ruxRN4qW";
-$port = 3306;
+return [
 
-$conn = new mysqli($host, $username, $password, $dbname, $port);
+    'app_name' => 'AidLink',
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+    'db' => [
 
-$conn->set_charset("utf8mb4");
-?>
+        'host' => 'sql7.freesqldatabase.com',
+
+        'name' => 'sql7827516',
+
+        'user' => 'sql7827516',
+
+        'pass' => 'l8ruxRN4qW',
+
+        'port' => 3306,
+
+    ]
+
+];
