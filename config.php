@@ -1,10 +1,29 @@
 <?php
 
-define('DB_HOST', getenv('MYSQLHOST'));
-define('DB_NAME', getenv('MYSQLDATABASE'));
-define('DB_USER', getenv('MYSQLUSER'));
-define('DB_PASS', getenv('MYSQLPASSWORD'));
-define('DB_PORT', getenv('MYSQLPORT'));
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+session_start();
+
+/*
+|--------------------------------------------------------------------------
+| DATABASE CONFIG
+|--------------------------------------------------------------------------
+| Replace these values with your Render/MySQL credentials
+|--------------------------------------------------------------------------
+*/
+
+define('DB_HOST', 'YOUR_DATABASE_HOST');
+define('DB_NAME', 'YOUR_DATABASE_NAME');
+define('DB_USER', 'YOUR_DATABASE_USER');
+define('DB_PASS', 'YOUR_DATABASE_PASSWORD');
+define('DB_PORT', 3306);
+
+/*
+|--------------------------------------------------------------------------
+| DATABASE CONNECTION
+|--------------------------------------------------------------------------
+*/
 
 $conn = new mysqli(
     DB_HOST,
