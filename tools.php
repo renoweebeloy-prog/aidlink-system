@@ -1,11 +1,15 @@
 <?php
 session_start();
-require_once __DIR__ . '/app/helpers.php';
+
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers.php';
+
 require_login();
 
 $regexResult = '';
 $weather = null;
 $weatherError = '';
+
 $locations = [
     'Mati City, Davao Oriental',
     'Davao City, Davao del Sur',
@@ -79,6 +83,7 @@ if (str_contains($descLower, 'sun') || str_contains($descLower, 'clear')) {
 
 ob_start();
 ?>
+
 <section class="page-head reveal">
     <div>
         <span class="eyebrow">Tools</span>
@@ -97,10 +102,12 @@ ob_start();
     <div class="tool-stack">
         <article class="panel reveal">
             <h2>Regex Name Scanner</h2>
+
             <form method="POST">
                 <textarea name="regex_text" rows="5" placeholder="Paste names or notes here..."></textarea>
                 <button class="button" type="submit">Scan Text</button>
             </form>
+
             <?php if ($regexResult): ?>
                 <p class="success-box"><?= e($regexResult) ?></p>
             <?php endif; ?>
@@ -109,6 +116,7 @@ ob_start();
         <article class="panel reveal">
             <h2>Local Scripts</h2>
             <p>Run maintenance helpers when preparing backups, aid summaries, and coordination records.</p>
+
             <pre>powershell -ExecutionPolicy Bypass -File scripts/backup.ps1</pre>
             <pre>scripts\system_report.bat</pre>
         </article>
@@ -117,8 +125,10 @@ ob_start();
     <article class="weather-panel reveal">
         <form class="weather-search" method="POST">
             <input type="text" name="city" data-location-suggest data-lat-field="weather_lat" data-lon-field="weather_lon" placeholder="Search city, municipality, or country" value="<?= e($_POST['city'] ?? '') ?>">
+
             <input type="hidden" name="weather_lat" value="<?= e($_POST['weather_lat'] ?? '') ?>">
             <input type="hidden" name="weather_lon" value="<?= e($_POST['weather_lon'] ?? '') ?>">
+
             <button class="small-button" name="weather" aria-label="Check weather">Check</button>
         </form>
 
@@ -127,15 +137,19 @@ ob_start();
                 <span>⌖</span>
                 <?= e($area) ?>
             </div>
+
             <div class="weather-main">
                 <div>
                     <p>Weather Now</p>
                     <strong><?= e($temp) ?>°C</strong>
                     <span>Feels like <?= e($feels) ?>°</span>
                 </div>
+
                 <div class="weather-icon" aria-hidden="true"><?= $weatherIcon ?></div>
             </div>
+
             <p class="weather-desc"><?= e($desc) ?></p>
+
             <div class="weather-range">
                 <span>High: <?= e($maxTemp) ?>°</span>
                 <span>Low: <?= e($minTemp) ?>°</span>
@@ -153,7 +167,10 @@ ob_start();
         <?php endif; ?>
     </article>
 </section>
+
 <?php
 $content = ob_get_clean();
 $title = 'Tools - AidLink';
+
 require __DIR__ . '/layout.php';
+?>
