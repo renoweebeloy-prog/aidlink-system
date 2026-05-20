@@ -2562,3 +2562,6 @@ html[data-theme="light"] .aidlink-wallpaper .aurora {
     letter-spacing:.3px;
     z-index:10;
 }
+.auth-slider.show-register .developer-login-only {
+    display: none;
+}
