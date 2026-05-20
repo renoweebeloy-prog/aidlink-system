@@ -2550,3 +2550,15 @@ html[data-theme="light"] .aidlink-wallpaper .aurora {
     opacity: 1;
     transform: translateY(0);
 }
+.developer-credit{
+    position:absolute;
+    bottom:18px;
+    left:0;
+    right:0;
+    text-align:center;
+    color:#ffffff;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.3px;
+    z-index:10;
+}
