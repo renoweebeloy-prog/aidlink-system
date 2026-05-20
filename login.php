@@ -181,11 +181,10 @@ ob_start();
 
     </div>
 
-    <!-- DEVELOPED BY -->
-    <p class="developer-credit">
-        Developed @ Mark Bryan Aguimod
-    </p>
-
+    <p class="developer-credit developer-login-only">
+    Developed @ Mark Bryan Aguimod
+</p>  
+    
 </section>
 
 <script>
