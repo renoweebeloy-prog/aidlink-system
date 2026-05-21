@@ -1,124 +1,117 @@
 <?php
+session_start();
 
-require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/app/Notification.php';
+require_once __DIR__ . '/app/helpers.php';
 
-class Notification
-{
-    public static function create(int $userId, string $title, string $body, string $link = 'dashboard.php'): void
-    {
-        $statement = Database::connect()->prepare(
-            'INSERT INTO notifications (user_id, title, body, link, is_read) VALUES (?, ?, ?, ?, 0)'
-        );
+require_login();
 
-        $statement->execute([$userId, $title, $body, $link]);
-    }
+$user = current_user();
 
-    public static function createForRoles(array $roles, string $title, string $body, string $link = 'dashboard.php'): void
-    {
-        if (empty($roles)) {
-            return;
-        }
+if (isset($_POST['mark_all'])) {
+    Notification::markAllRead((int) $user['id']);
+    redirect('notifications.php');
+}
 
-        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+if (isset($_POST['delete_all'])) {
+    Notification::deleteAll((int) $user['id']);
+    redirect('notifications.php');
+}
 
-        $statement = Database::connect()->prepare(
-            "SELECT id FROM users WHERE role IN ($placeholders)"
-        );
+if (isset($_GET['read'])) {
 
-        $statement->execute($roles);
+    $link = Notification::markOneRead(
+        (int) $_GET['read'],
+        (int) $user['id']
+    );
 
-        foreach ($statement->fetchAll() as $user) {
-            self::create((int) $user['id'], $title, $body, $link);
-        }
-    }
-
-    public static function unreadCount(int $userId): int
-    {
-        $statement = Database::connect()->prepare(
-            'SELECT COUNT(*) FROM notifications
-             WHERE user_id = ?
-             AND is_read = 0
-             AND link NOT LIKE ?'
-        );
-
-        $statement->execute([$userId, 'messenger.php%']);
-
-        return (int) $statement->fetchColumn();
-    }
-
-    public static function all(int $userId): array
-    {
-        $statement = Database::connect()->prepare(
-            'SELECT * FROM notifications
-             WHERE user_id = ?
-             AND link NOT LIKE ?
-             ORDER BY created_at DESC
-             LIMIT 30'
-        );
-
-        $statement->execute([$userId, 'messenger.php%']);
-
-        return $statement->fetchAll();
-    }
-
-    public static function markAllRead(int $userId): void
-    {
-        $statement = Database::connect()->prepare(
-            'UPDATE notifications
-             SET is_read = 1
-             WHERE user_id = ?
-             AND link NOT LIKE ?'
-        );
-
-        $statement->execute([$userId, 'messenger.php%']);
-    }
-
-    public static function markOneRead(int $notificationId, int $userId): ?string
-    {
-        $pdo = Database::connect();
-
-        $select = $pdo->prepare(
-            'SELECT link FROM notifications
-             WHERE id = ?
-             AND user_id = ?
-             LIMIT 1'
-        );
-
-        $select->execute([$notificationId, $userId]);
-
-        $link = $select->fetchColumn();
-
-        if (!$link) {
-            return null;
-        }
-
-        $update = $pdo->prepare(
-            'UPDATE notifications
-             SET is_read = 1
-             WHERE id = ?
-             AND user_id = ?'
-        );
-
-        $update->execute([$notificationId, $userId]);
-
-        return (string) $link;
-    }
-
-    public static function delete(int $notificationId, int $userId): void
-    {
-        $statement = Database::connect()->prepare(
-            'DELETE FROM notifications WHERE id = ? AND user_id = ?'
-        );
-
-        $statement->execute([$notificationId, $userId]);
-    }
-
-    public static function deleteAll(int $userId): void
-    {
-        $statement = Database::connect()->prepare(
-            'DELETE FROM notifications WHERE user_id = ? AND link NOT LIKE ?'
-        );
-
-        $statement->execute([$userId, 'messenger.php%']);
+    if ($link) {
+        redirect($link);
     }
 }
+
+$notifications = Notification::all((int) $user['id']);
+
+ob_start();
+?>
+
+<section class="page-head reveal">
+    <div>
+        <span class="eyebrow">Alerts</span>
+        <h1>Notifications</h1>
+        <p class="lead">
+            View your latest system notifications and updates.
+        </p>
+    </div>
+</section>
+
+<section class="panel reveal">
+
+    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+
+        <form method="POST">
+            <button class="small-button" name="mark_all">
+                Mark all as read
+            </button>
+        </form>
+
+        <form method="POST">
+            <button class="small-button danger-button" name="delete_all">
+                Delete all
+            </button>
+        </form>
+
+    </div>
+
+    <?php if (!$notifications): ?>
+
+        <div class="notice-box">
+            No notifications available.
+        </div>
+
+    <?php endif; ?>
+
+    <div class="notification-list">
+
+        <?php foreach ($notifications as $notification): ?>
+
+            <article class="notification-card <?= !$notification['is_read'] ? 'unread' : '' ?>">
+
+                <h3>
+                    <?= e($notification['title']) ?>
+                </h3>
+
+                <p>
+                    <?= e($notification['body']) ?>
+                </p>
+
+                <small class="muted">
+                    <?= e($notification['created_at']) ?>
+                </small>
+
+                <div style="margin-top:15px;">
+
+                    <a
+                        class="small-button"
+                        href="notifications.php?read=<?= (int) $notification['id'] ?>"
+                    >
+                        Open
+                    </a>
+
+                </div>
+
+            </article>
+
+        <?php endforeach; ?>
+
+    </div>
+
+</section>
+
+<?php
+$content = ob_get_clean();
+
+$title = 'Notifications - AidLink';
+
+require __DIR__ . '/layout.php';
+?>
