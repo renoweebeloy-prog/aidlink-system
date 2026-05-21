@@ -2,52 +2,15 @@
 
 session_start();
 
-/*
-|--------------------------------------------------------------------------
-| AUTO FIND Auth.php
-|--------------------------------------------------------------------------
-*/
-
-$possiblePaths = [
-    __DIR__ . '/app/Auth.php',
-    __DIR__ . '/../app/Auth.php',
-    dirname(__DIR__) . '/app/Auth.php',
-];
-
-$authLoaded = false;
-
-foreach ($possiblePaths as $path) {
-
-    if (file_exists($path)) {
-
-        require_once $path;
-
-        $authLoaded = true;
-
-        break;
-    }
-}
-
-if (!$authLoaded) {
-
-    die('Auth.php not found. Check your project folder structure.');
-}
-
-/*
-|--------------------------------------------------------------------------
-| LOGOUT PROCESS
-|--------------------------------------------------------------------------
-*/
+require_once __DIR__ . '/Auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_logout'])) {
 
     Auth::logout();
 
     header('Location: login.php');
-
     exit;
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -86,18 +49,6 @@ body{
     box-shadow:0 20px 50px rgba(0,0,0,.45);
 }
 
-.logout-icon{
-    width:85px;
-    height:85px;
-    margin:0 auto 20px;
-    border-radius:50%;
-    background:rgba(255,255,255,.12);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:40px;
-}
-
 .logout-box h1{
     margin-bottom:10px;
     font-size:34px;
@@ -132,19 +83,9 @@ body{
     color:white;
 }
 
-.logout-btn:hover{
-    background:#d91f1f;
-    transform:translateY(-2px);
-}
-
 .cancel-btn{
     background:rgba(255,255,255,.12);
     color:white;
-}
-
-.cancel-btn:hover{
-    background:rgba(255,255,255,.22);
-    transform:translateY(-2px);
 }
 
 </style>
@@ -155,20 +96,13 @@ body{
 
 <div class="logout-box">
 
-    <div class="logout-icon">
-        ↳
-    </div>
-
     <h1>Logout</h1>
 
-    <p>
-        Are you sure you want to log out from AidLink?
-    </p>
+    <p>Are you sure you want to log out?</p>
 
     <div class="actions">
 
         <form method="POST">
-
             <button
                 type="submit"
                 name="confirm_logout"
@@ -176,7 +110,6 @@ body{
             >
                 Yes, Logout
             </button>
-
         </form>
 
         <a href="dashboard.php" class="btn cancel-btn">
