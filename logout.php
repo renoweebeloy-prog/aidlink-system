@@ -221,7 +221,7 @@ body::after{
         </div>
 
         <div class="dev-text">
-            Developed @ Mark Bryan Aguimod
+     
         </div>
 
     </div>
