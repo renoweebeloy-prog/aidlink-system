@@ -1,98 +1,80 @@
 <?php
-session_start();
 
-require_once __DIR__ . '/app/Notification.php';
-require_once __DIR__ . '/app/helpers.php';
+require_once __DIR__ . '/Database.php';
 
-require_login();
+class Notification
+{
+    public static function create(int $userId, string $title, string $body, string $link = 'dashboard.php'): void
+    {
+        $statement = Database::connect()->prepare(
+            'INSERT INTO notifications (user_id, title, body, link, is_read) VALUES (?, ?, ?, ?, 0)'
+        );
 
-$user = current_user();
+        $statement->execute([$userId, $title, $body, $link]);
+    }
 
-if (isset($_GET['read'])) {
-    $link = Notification::markOneRead(
-        (int) $_GET['read'],
-        (int) $user['id']
-    );
+    public static function unreadCount(int $userId): int
+    {
+        $statement = Database::connect()->prepare(
+            'SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0 AND link NOT LIKE ?'
+        );
 
-    if ($link) {
-        header('Location: ' . $link);
-        exit;
+        $statement->execute([$userId, 'messenger.php%']);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    public static function all(int $userId): array
+    {
+        $statement = Database::connect()->prepare(
+            'SELECT * FROM notifications WHERE user_id = ? AND link NOT LIKE ? ORDER BY created_at DESC LIMIT 30'
+        );
+
+        $statement->execute([$userId, 'messenger.php%']);
+
+        return $statement->fetchAll();
+    }
+
+    public static function markAllRead(int $userId): void
+    {
+        $statement = Database::connect()->prepare(
+            'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND link NOT LIKE ?'
+        );
+
+        $statement->execute([$userId, 'messenger.php%']);
+    }
+
+    public static function markOneRead(int $notificationId, int $userId): ?string
+    {
+        $pdo = Database::connect();
+
+        $select = $pdo->prepare(
+            'SELECT link FROM notifications WHERE id = ? AND user_id = ? LIMIT 1'
+        );
+
+        $select->execute([$notificationId, $userId]);
+
+        $link = $select->fetchColumn();
+
+        if (!$link) {
+            return null;
+        }
+
+        $update = $pdo->prepare(
+            'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
+        );
+
+        $update->execute([$notificationId, $userId]);
+
+        return (string) $link;
+    }
+
+    public static function deleteAll(int $userId): void
+    {
+        $statement = Database::connect()->prepare(
+            'DELETE FROM notifications WHERE user_id = ? AND link NOT LIKE ?'
+        );
+
+        $statement->execute([$userId, 'messenger.php%']);
     }
 }
-
-if (isset($_POST['mark_all'])) {
-    Notification::markAllRead((int) $user['id']);
-    header('Location: notifications.php');
-    exit;
-}
-
-$notifications = Notification::all((int) $user['id']);
-
-ob_start();
-?>
-
-<section class="page-head reveal">
-    <div>
-        <span class="eyebrow">Notifications</span>
-        <h1>Alerts & Updates</h1>
-        <p class="lead">View recent aid request updates and announcements.</p>
-    </div>
-</section>
-
-<section class="panel reveal">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <h2>My Notifications</h2>
-
-        <form method="POST">
-            <button class="small-button" name="mark_all">
-                Mark all as read
-            </button>
-        </form>
-    </div>
-
-    <?php if ($notifications): ?>
-
-        <div class="notification-list">
-
-            <?php foreach ($notifications as $notification): ?>
-
-                <a
-                    href="notifications.php?read=<?= (int) $notification['id'] ?>"
-                    class="notification-card <?= !$notification['is_read'] ? 'unread' : '' ?>"
-                    style="
-                        display:block;
-                        padding:18px;
-                        border-radius:18px;
-                        margin-bottom:15px;
-                        text-decoration:none;
-                        background:rgba(255,255,255,.05);
-                        border:1px solid rgba(255,255,255,.08);
-                        color:white;
-                    "
-                >
-                    <h3><?= e($notification['title']) ?></h3>
-
-                    <p><?= e($notification['body']) ?></p>
-
-                    <small style="opacity:.7;">
-                        <?= e($notification['created_at']) ?>
-                    </small>
-                </a>
-
-            <?php endforeach; ?>
-
-        </div>
-
-    <?php else: ?>
-
-        <p class="muted">No notifications available.</p>
-
-    <?php endif; ?>
-</section>
-
-<?php
-$content = ob_get_clean();
-$title = 'Notifications - AidLink';
-
-require __DIR__ . '/layout.php';
-?>
