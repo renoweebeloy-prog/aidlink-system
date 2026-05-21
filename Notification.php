@@ -7,7 +7,7 @@ class Notification
     public static function create(int $userId, string $title, string $body, string $link = 'dashboard.php'): void
     {
         $statement = Database::connect()->prepare(
-            'INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)'
+            'INSERT INTO notifications (user_id, title, body, link, is_read) VALUES (?, ?, ?, ?, 0)'
         );
 
         $statement->execute([$userId, $title, $body, $link]);
@@ -35,9 +35,9 @@ class Notification
     public static function unreadCount(int $userId): int
     {
         $statement = Database::connect()->prepare(
-            'SELECT COUNT(*) FROM notifications 
-             WHERE user_id = ? 
-             AND is_read = 0 
+            'SELECT COUNT(*) FROM notifications
+             WHERE user_id = ?
+             AND is_read = 0
              AND link NOT LIKE ?'
         );
 
@@ -49,10 +49,10 @@ class Notification
     public static function all(int $userId): array
     {
         $statement = Database::connect()->prepare(
-            'SELECT * FROM notifications 
-             WHERE user_id = ? 
-             AND link NOT LIKE ? 
-             ORDER BY created_at DESC 
+            'SELECT * FROM notifications
+             WHERE user_id = ?
+             AND link NOT LIKE ?
+             ORDER BY created_at DESC
              LIMIT 30'
         );
 
@@ -64,9 +64,9 @@ class Notification
     public static function markAllRead(int $userId): void
     {
         $statement = Database::connect()->prepare(
-            'UPDATE notifications 
-             SET is_read = 1 
-             WHERE user_id = ? 
+            'UPDATE notifications
+             SET is_read = 1
+             WHERE user_id = ?
              AND link NOT LIKE ?'
         );
 
@@ -78,9 +78,9 @@ class Notification
         $pdo = Database::connect();
 
         $select = $pdo->prepare(
-            'SELECT link FROM notifications 
-             WHERE id = ? 
-             AND user_id = ? 
+            'SELECT link FROM notifications
+             WHERE id = ?
+             AND user_id = ?
              LIMIT 1'
         );
 
@@ -93,14 +93,32 @@ class Notification
         }
 
         $update = $pdo->prepare(
-            'UPDATE notifications 
-             SET is_read = 1 
-             WHERE id = ? 
+            'UPDATE notifications
+             SET is_read = 1
+             WHERE id = ?
              AND user_id = ?'
         );
 
         $update->execute([$notificationId, $userId]);
 
         return (string) $link;
+    }
+
+    public static function delete(int $notificationId, int $userId): void
+    {
+        $statement = Database::connect()->prepare(
+            'DELETE FROM notifications WHERE id = ? AND user_id = ?'
+        );
+
+        $statement->execute([$notificationId, $userId]);
+    }
+
+    public static function deleteAll(int $userId): void
+    {
+        $statement = Database::connect()->prepare(
+            'DELETE FROM notifications WHERE user_id = ? AND link NOT LIKE ?'
+        );
+
+        $statement->execute([$userId, 'messenger.php%']);
     }
 }
