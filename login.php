@@ -1,9 +1,9 @@
-<?phpif
- (file_exists(__DIR__ . '/maintenance.flag')) {
+<?php
+
+if (file_exists(__DIR__ . '/maintenance.flag')) {
     header('Location: maintenance.php');
     exit;
 }
-
 
 session_start();
 
