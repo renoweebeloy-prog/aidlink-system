@@ -1,9 +1,9 @@
-<?php
-
-if (file_exists(__DIR__ . '/maintenance.flag')) {
+<?phpif
+ (file_exists(__DIR__ . '/maintenance.flag')) {
     header('Location: maintenance.php');
     exit;
 }
+
 
 session_start();
 
@@ -14,6 +14,7 @@ require_once __DIR__ . '/helpers.php';
 $error = '';
 $registerError = '';
 $registerSuccess = '';
+
 $success = isset($_GET['created'])
     ? 'Account created successfully. You may now sign in.'
     : '';
@@ -37,8 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($_POST['phone'] ?? '')
             );
 
-            $registerSuccess =
-                'Account created successfully. You can now sign in using your new account.';
+            $registerSuccess = 'Account created successfully. You can now sign in using your new account.';
 
         } catch (Throwable $exception) {
 
@@ -54,8 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (Auth::login($email, $password)) {
 
-            header('Location: dashboard.php');
-            exit;
+            redirect('dashboard.php');
         }
 
         $error = 'The email or password you entered is incorrect.';
@@ -77,17 +76,13 @@ ob_start();
         <h1>AidLink</h1>
 
         <p class="auth-copy auth-copy-login">
-            Welcome back. Sign in to manage aid requests,
-            messages, queues, and community updates.
+            Welcome back. Sign in to manage aid requests, messages,
+            queues, and community updates.
         </p>
 
         <p class="auth-copy auth-copy-register">
-            Join AidLink as a recipient and start submitting
-            aid requests with real-time updates.
-        </p>
-
-        <p class="developer-credit developer-login-only">
-            Developed @ Mark Bryan Aguimod
+            Join AidLink as a recipient and start submitting aid requests
+            with real-time updates.
         </p>
 
     </div>
@@ -95,7 +90,6 @@ ob_start();
     <div class="auth-form-panel auth-pane">
 
         <!-- LOGIN FORM -->
-
         <form class="auth-form auth-login-form" method="POST" autocomplete="off">
 
             <h2>Sign in</h2>
@@ -107,7 +101,6 @@ ob_start();
                     Signed in as <?= e(current_user()['fullname']) ?>.
 
                     <div class="auth-actions">
-
                         <a class="small-button" href="dashboard.php">
                             Continue
                         </a>
@@ -115,7 +108,6 @@ ob_start();
                         <a class="small-button secondary" href="logout.php">
                             Logout
                         </a>
-
                     </div>
 
                 </div>
@@ -146,18 +138,13 @@ ob_start();
                 Forgot password?
             </a>
 
-            <button
-                class="muted-link auth-switch"
-                type="button"
-                data-auth-switch="register"
-            >
+            <button class="muted-link auth-switch" type="button" data-auth-switch="register">
                 Create recipient account
             </button>
 
         </form>
 
         <!-- REGISTER FORM -->
-
         <form class="auth-form auth-register-form" method="POST" autocomplete="off">
 
             <input type="hidden" name="register_account" value="1">
@@ -181,12 +168,7 @@ ob_start();
             </label>
 
             <label>Mobile number
-                <input
-                    type="text"
-                    name="phone"
-                    placeholder="09XXXXXXXXX"
-                    required
-                >
+                <input type="text" name="phone" placeholder="09XXXXXXXXX" required>
             </label>
 
             <label>Password
@@ -197,11 +179,7 @@ ob_start();
                 Create Account
             </button>
 
-            <button
-                class="muted-link auth-switch"
-                type="button"
-                data-auth-switch="login"
-            >
+            <button class="muted-link auth-switch" type="button" data-auth-switch="login">
                 Return to sign in
             </button>
 
@@ -209,10 +187,13 @@ ob_start();
 
     </div>
 
+    <p class="developer-credit developer-login-only">
+    Developed @ Mark Bryan Aguimod
+</p>  
+    
 </section>
 
 <script>
-
 document.addEventListener('DOMContentLoaded', function () {
 
     const slider = document.getElementById('authSlider');
@@ -246,15 +227,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-
 </script>
 
 <?php
-
 $content = ob_get_clean();
 
 $title = 'Login - AidLink';
 
 require __DIR__ . '/layout.php';
-
 ?>
