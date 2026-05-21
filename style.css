@@ -2565,3 +2565,21 @@ html[data-theme="light"] .aidlink-wallpaper .aurora {
 .auth-slider.show-register .developer-login-only {
     display: none;
 }
+.developer-credit {
+    position: absolute;
+    bottom: 18px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    z-index: 50;
+    text-shadow: 0 2px 8px rgba(0,0,0,.75);
+}
+
+html[data-theme="light"] .developer-credit {
+    color: #062033;
+    text-shadow: 0 2px 10px rgba(255,255,255,.95);
+}
