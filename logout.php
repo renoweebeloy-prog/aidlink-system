@@ -2,13 +2,49 @@
 
 session_start();
 
-require_once __DIR__ . '/../app/Auth.php';
+/*
+|--------------------------------------------------------------------------
+| AUTO FIND Auth.php
+|--------------------------------------------------------------------------
+*/
+
+$possiblePaths = [
+    __DIR__ . '/app/Auth.php',
+    __DIR__ . '/../app/Auth.php',
+    dirname(__DIR__) . '/app/Auth.php',
+];
+
+$authLoaded = false;
+
+foreach ($possiblePaths as $path) {
+
+    if (file_exists($path)) {
+
+        require_once $path;
+
+        $authLoaded = true;
+
+        break;
+    }
+}
+
+if (!$authLoaded) {
+
+    die('Auth.php not found. Check your project folder structure.');
+}
+
+/*
+|--------------------------------------------------------------------------
+| LOGOUT PROCESS
+|--------------------------------------------------------------------------
+*/
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_logout'])) {
 
     Auth::logout();
 
     header('Location: login.php');
+
     exit;
 }
 
