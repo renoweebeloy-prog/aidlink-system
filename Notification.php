@@ -2,7 +2,6 @@
 session_start();
 
 require_once __DIR__ . '/app/Notification.php';
-require_once __DIR__ . '/app/helpers.php';
 
 require_login();
 
