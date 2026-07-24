@@ -1,7 +1,12 @@
 <?php
 session_start();
-require_once __DIR__ . '/../app/Notification.php';
-require_once __DIR__ . '/../app/helpers.php';
+
+// Gi-update ang path para automatic niya pangitaon ang 'app' folder
+// bisan og naa ni sa sulod sa 'public' folder o naa sa gawas sa root folder.
+$appDir = file_exists(__DIR__ . '/../app/Notification.php') ? __DIR__ . '/../app' : __DIR__ . '/app';
+require_once $appDir . '/Notification.php';
+require_once $appDir . '/helpers.php';
+
 require_login();
 
 $user = current_user();
