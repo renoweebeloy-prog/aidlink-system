@@ -1,21 +1,14 @@
 <?php
 
 return [
-
     'app_name' => 'AidLink',
-
     'db' => [
-
-        'host' => 'sql7.freesqldatabase.com',
-
-        'name' => 'sql7827516',
-
-        'user' => 'sql7827516',
-
-        'pass' => 'l8ruxRN4qW',
-
-        'port' => 3306,
-
+        // Mukuha ni sa Render Environment Variables, pero kung wala, 
+        // gamiton niya kining imong default Supabase credentials.
+        'host' => getenv('DB_HOST') ?: 'db.jfaqeporbfqacwklvhov.supabase.co',
+        'name' => getenv('DB_NAME') ?: 'postgres',
+        'user' => getenv('DB_USER') ?: 'postgres',
+        'pass' => getenv('DB_PASS') ?: 'D3GNEtgqZezUV9b9',
+        'port' => getenv('DB_PORT') ?: 5432,
     ]
-
 ];
