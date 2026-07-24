@@ -1,8 +1,12 @@
 <?php
-require_once __DIR__ . '/Database.php';
-require_once __DIR__ . '/Queue.php';
-require_once __DIR__ . '/RabbitMQ.php';
-require_once __DIR__ . '/Notification.php';
+
+// SMART PATH FINDER para sa mga dependencies
+$appDir = file_exists(__DIR__ . '/app/Database.php') ? __DIR__ . '/app' : (file_exists(__DIR__ . '/../app/Database.php') ? __DIR__ . '/../app' : __DIR__);
+
+require_once $appDir . '/Database.php';
+require_once $appDir . '/Queue.php';
+require_once $appDir . '/RabbitMQ.php';
+require_once $appDir . '/Notification.php';
 
 class ServiceRequest
 {
@@ -11,10 +15,13 @@ class ServiceRequest
         $pdo = Database::connect();
         foreach (['recipient_deleted_at', 'admin_deleted_at', 'staff_deleted_at'] as $column) {
             try {
-                $check = $pdo->prepare('SHOW COLUMNS FROM service_requests LIKE ?');
+                // FIX: PostgreSQL syntax para pag-check sa column imbes nga MySQL 'SHOW COLUMNS'
+                $check = $pdo->prepare("SELECT column_name FROM information_schema.columns WHERE table_name = 'service_requests' AND column_name = ?");
                 $check->execute([$column]);
+                
                 if (!$check->fetch()) {
-                    $pdo->exec("ALTER TABLE service_requests ADD COLUMN {$column} DATETIME NULL");
+                    // FIX: Gigamit ang TIMESTAMP imbes nga DATETIME para sa PostgreSQL
+                    $pdo->exec("ALTER TABLE service_requests ADD COLUMN {$column} TIMESTAMP NULL");
                 }
             } catch (Throwable $error) {
                 // Keep the system usable even if the database account has limited ALTER permission.
@@ -64,7 +71,7 @@ class ServiceRequest
                  ORDER BY sr.created_at DESC'
             );
             $statement->execute([$userId]);
-            return $statement->fetchAll();
+            return $statement->fetchAll(PDO::FETCH_ASSOC);
         }
 
         $deleteColumn = $viewerRole === 'staff' ? 'staff_deleted_at' : 'admin_deleted_at';
@@ -76,7 +83,7 @@ class ServiceRequest
              ORDER BY sr.created_at DESC"
         );
 
-        return $statement->fetchAll();
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function updateStatus(int $requestId, string $status, string $remarks): void
@@ -105,6 +112,7 @@ class ServiceRequest
             'created_at' => date('Y-m-d H:i:s'),
             'source' => 'AidLink',
         ]);
+        
         if ($ownerId > 0) {
             Notification::create(
                 $ownerId,
