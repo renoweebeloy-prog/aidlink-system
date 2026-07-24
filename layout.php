@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/helpers.php';
-require_once __DIR__ . '/Notification.php';
+require_once __DIR__ . '/notification.php';
 require_once __DIR__ . '/Messenger.php';
 
 $config = require __DIR__ . '/config.php';
