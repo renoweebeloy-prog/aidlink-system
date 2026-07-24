@@ -1,95 +1,80 @@
 <?php
 
-// SMART PATH FINDER para sa Database.php
-$dbPath = file_exists(__DIR__ . '/Database.php') ? __DIR__ . '/Database.php' : __DIR__ . '/../app/Database.php';
-require_once $dbPath;
+require_once __DIR__ . '/Database.php';
 
 class Notification
 {
-    public static function create(int $userId, string $title, string $body, string $link = 'dashboard.php'): void
-    {
-        $statement = Database::connect()->prepare(
-            'INSERT INTO notifications (user_id, title, body, link, is_read) VALUES (?, ?, ?, ?, 0)'
-        );
+    public static function create(int $userId, string $title, string $body, string $link = 'dashboard.php'): void
+    {
+        $statement = Database::connect()->prepare(
+            'INSERT INTO notifications (user_id, title, body, link, is_read) VALUES (?, ?, ?, ?, 0)'
+        );
 
-        $statement->execute([$userId, $title, $body, $link]);
-    }
+        $statement->execute([$userId, $title, $body, $link]);
+    }
 
-    // GIBALIK KINI NGA FUNCTION: Gikinahanglan ni sa ServiceRequest aron ma-notify ang Admins/Staff
-    public static function createForRoles(array $roles, string $title, string $body, string $link = 'dashboard.php'): void
-    {
-        $placeholders = implode(',', array_fill(0, count($roles), '?'));
-        $statement = Database::connect()->prepare("SELECT id FROM users WHERE role IN ($placeholders)");
-        $statement->execute($roles);
+    public static function unreadCount(int $userId): int
+    {
+        $statement = Database::connect()->prepare(
+            'SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0 AND link NOT LIKE ?'
+        );
 
-        foreach ($statement->fetchAll() as $user) {
-            self::create((int) $user['id'], $title, $body, $link);
-        }
-    }
+        $statement->execute([$userId, 'messenger.php%']);
 
-    public static function unreadCount(int $userId): int
-    {
-        $statement = Database::connect()->prepare(
-            'SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0 AND link NOT LIKE ?'
-        );
+        return (int) $statement->fetchColumn();
+    }
 
-        $statement->execute([$userId, 'messenger.php%']);
+    public static function all(int $userId): array
+    {
+        $statement = Database::connect()->prepare(
+            'SELECT * FROM notifications WHERE user_id = ? AND link NOT LIKE ? ORDER BY created_at DESC LIMIT 30'
+        );
 
-        return (int) $statement->fetchColumn();
-    }
+        $statement->execute([$userId, 'messenger.php%']);
 
-    public static function all(int $userId): array
-    {
-        $statement = Database::connect()->prepare(
-            'SELECT * FROM notifications WHERE user_id = ? AND link NOT LIKE ? ORDER BY created_at DESC LIMIT 30'
-        );
+        return $statement->fetchAll();
+    }
 
-        $statement->execute([$userId, 'messenger.php%']);
+    public static function markAllRead(int $userId): void
+    {
+        $statement = Database::connect()->prepare(
+            'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND link NOT LIKE ?'
+        );
 
-        return $statement->fetchAll();
-    }
+        $statement->execute([$userId, 'messenger.php%']);
+    }
 
-    public static function markAllRead(int $userId): void
-    {
-        $statement = Database::connect()->prepare(
-            'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND link NOT LIKE ?'
-        );
+    public static function markOneRead(int $notificationId, int $userId): ?string
+    {
+        $pdo = Database::connect();
 
-        $statement->execute([$userId, 'messenger.php%']);
-    }
+        $select = $pdo->prepare(
+            'SELECT link FROM notifications WHERE id = ? AND user_id = ? LIMIT 1'
+        );
 
-    public static function markOneRead(int $notificationId, int $userId): ?string
-    {
-        $pdo = Database::connect();
+        $select->execute([$notificationId, $userId]);
 
-        $select = $pdo->prepare(
-            'SELECT link FROM notifications WHERE id = ? AND user_id = ? LIMIT 1'
-        );
+        $link = $select->fetchColumn();
 
-        $select->execute([$notificationId, $userId]);
+        if (!$link) {
+            return null;
+        }
 
-        $link = $select->fetchColumn();
+        $update = $pdo->prepare(
+            'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
+        );
 
-        if (!$link) {
-            return null;
-        }
+        $update->execute([$notificationId, $userId]);
 
-        $update = $pdo->prepare(
-            'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
-        );
+        return (string) $link;
+    }
 
-        $update->execute([$notificationId, $userId]);
+    public static function deleteAll(int $userId): void
+    {
+        $statement = Database::connect()->prepare(
+            'DELETE FROM notifications WHERE user_id = ? AND link NOT LIKE ?'
+        );
 
-        return (string) $link;
-    }
-
-    // IMONG BAG-ONG FUNCTION
-    public static function deleteAll(int $userId): void
-    {
-        $statement = Database::connect()->prepare(
-            'DELETE FROM notifications WHERE user_id = ? AND link NOT LIKE ?'
-        );
-
-        $statement->execute([$userId, 'messenger.php%']);
-    }
+        $statement->execute([$userId, 'messenger.php%']);
+    }
 }
