@@ -4,36 +4,8 @@ require_once __DIR__ . '/RabbitMQ.php';
 
 class Messenger
 {
-    // Added static property to prevent running SHOW COLUMNS multiple times per request
-    private static bool $schemaChecked = false;
-
-    private static function ensureDeliveryColumn(): void
-    {
-        if (self::$schemaChecked) {
-            return;
-        }
-
-        $pdo = Database::connect();
-
-        try {
-            $check = $pdo->prepare('SHOW COLUMNS FROM chat_messages LIKE ?');
-            $check->execute(['delivered_at']);
-
-            if (!$check->fetch()) {
-                $pdo->exec('ALTER TABLE chat_messages ADD COLUMN delivered_at DATETIME NULL');
-                $pdo->exec('UPDATE chat_messages SET delivered_at = created_at WHERE delivered_at IS NULL');
-            }
-            
-            self::$schemaChecked = true;
-        } catch (Throwable $error) {
-            // Keep messenger usable even if ALTER permission is limited.
-        }
-    }
-
     public static function markDelivered(int $messageId): void
     {
-        self::ensureDeliveryColumn();
-
         $statement = Database::connect()->prepare(
             'UPDATE chat_messages SET delivered_at = NOW() WHERE id = ? AND delivered_at IS NULL'
         );
@@ -43,8 +15,7 @@ class Messenger
 
     public static function conversations(int $userId): array
     {
-        self::ensureDeliveryColumn();
-
+        // FIX: Gibutang nato ang mismong subquery sulod sa COALESCE aron dili magka-error ang PostgreSQL sa aliases
         $sql = 'SELECT c.*, 
                        (SELECT body 
                         FROM chat_messages 
@@ -67,18 +38,27 @@ class Messenger
                 FROM conversations c
                 JOIN conversation_members m ON m.conversation_id = c.id
                 WHERE m.user_id = ?
-                ORDER BY COALESCE(last_time, c.created_at) DESC';
+                ORDER BY COALESCE(
+                    (SELECT created_at 
+                     FROM chat_messages 
+                     WHERE conversation_id = c.id
+                       AND (sender_id = ? OR delivered_at IS NOT NULL)
+                     ORDER BY created_at DESC 
+                     LIMIT 1), 
+                    c.created_at
+                ) DESC';
                 
         $statement = Database::connect()->prepare($sql);
-        $statement->execute([$userId, $userId, $userId, $userId]);
+        
+        // Namatikdan nimo nga nahimong 5 kabuok ang $userId?
+        // Tungod ni kay 5 kabuok ang '?' placeholders sa atong SQL query karon.
+        $statement->execute([$userId, $userId, $userId, $userId, $userId]);
         
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function unreadCount(int $userId): int
     {
-        self::ensureDeliveryColumn();
-
         $statement = Database::connect()->prepare(
             'SELECT COUNT(*)
              FROM chat_messages cm
@@ -107,8 +87,6 @@ class Messenger
 
     public static function messages(int $conversationId, int $userId): array
     {
-        self::ensureDeliveryColumn();
-        
         if (!self::findConversation($conversationId, $userId)) {
             return [];
         }
@@ -139,8 +117,6 @@ class Messenger
 
     public static function send(int $conversationId, int $senderId, string $body): void
     {
-        self::ensureDeliveryColumn();
-        
         $body = trim($body);
         if ($body === '') {
             throw new InvalidArgumentException('Message cannot be empty.');
@@ -158,7 +134,6 @@ class Messenger
 
         $messageId = (int) $pdo->lastInsertId();
 
-        // Removed the duplicate query block that was here
         $receiverStatement = $pdo->prepare(
             'SELECT user_id FROM conversation_members WHERE conversation_id = ? AND user_id != ?'
         );
@@ -216,7 +191,6 @@ class Messenger
         }
 
         try {
-            // Added Database Transaction for data integrity
             $pdo->beginTransaction();
 
             $statement = $pdo->prepare(
@@ -300,7 +274,7 @@ class Messenger
         $memberIds = array_values(array_unique(array_map('intval', $memberIds)));
         $pdo = Database::connect();
         
-        $insert = $pdo->prepare('INSERT IGNORE INTO conversation_members (conversation_id, user_id) VALUES (?, ?)');
+        $insert = $pdo->prepare('INSERT INTO conversation_members (conversation_id, user_id) VALUES (?, ?) ON CONFLICT (conversation_id, user_id) DO NOTHING');
 
         foreach ($memberIds as $memberId) {
             if ($memberId > 0 && $memberId !== $requesterId) {
@@ -316,7 +290,6 @@ class Messenger
         $statement = $pdo->prepare(
             'UPDATE chat_messages SET body = ? WHERE id = ? AND sender_id = ?'
         );
-        // Added standard deletion message
         $statement->execute(['This message was deleted', $messageId, $userId]);
     }
 
