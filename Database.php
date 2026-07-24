@@ -13,7 +13,8 @@ class Database
         $config = require __DIR__ . '/config.php';
         $db = $config['db'];
 
-        $dsn = "mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset=utf8mb4";
+        // UPDATE: Gi-change gikan 'mysql:' paingon sa 'pgsql:'
+        $dsn = "pgsql:host={$db['host']};port={$db['port']};dbname={$db['name']}";
 
         try {
             self::$connection = new PDO($dsn, $db['user'], $db['pass'], [
