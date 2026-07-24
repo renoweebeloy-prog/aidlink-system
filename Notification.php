@@ -1,6 +1,8 @@
 <?php
 
-require_once __DIR__ . '/Database.php';
+// SMART PATH FINDER para sa Database.php
+$dbPath = file_exists(__DIR__ . '/Database.php') ? __DIR__ . '/Database.php' : __DIR__ . '/../app/Database.php';
+require_once $dbPath;
 
 class Notification
 {
@@ -11,6 +13,18 @@ class Notification
         );
 
         $statement->execute([$userId, $title, $body, $link]);
+    }
+
+    // GIBALIK KINI NGA FUNCTION: Gikinahanglan ni sa ServiceRequest aron ma-notify ang Admins/Staff
+    public static function createForRoles(array $roles, string $title, string $body, string $link = 'dashboard.php'): void
+    {
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $statement = Database::connect()->prepare("SELECT id FROM users WHERE role IN ($placeholders)");
+        $statement->execute($roles);
+
+        foreach ($statement->fetchAll() as $user) {
+            self::create((int) $user['id'], $title, $body, $link);
+        }
     }
 
     public static function unreadCount(int $userId): int
@@ -69,6 +83,7 @@ class Notification
         return (string) $link;
     }
 
+    // IMONG BAG-ONG FUNCTION
     public static function deleteAll(int $userId): void
     {
         $statement = Database::connect()->prepare(
