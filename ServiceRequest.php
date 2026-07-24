@@ -6,7 +6,7 @@ $appDir = file_exists(__DIR__ . '/app/Database.php') ? __DIR__ . '/app' : (file_
 require_once $appDir . '/Database.php';
 require_once $appDir . '/Queue.php';
 require_once $appDir . '/RabbitMQ.php';
-require_once $appDir . '/Notification.php';
+require_once $appDir . '/notification.php';
 
 class ServiceRequest
 {
