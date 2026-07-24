@@ -2,6 +2,9 @@
     "name": "aidlink/rabbitmq-backup",
     "description": "AidLink RabbitMQ-enabled backup version for ITP 121 messaging demonstration.",
     "require": {
+        "php": ">=8.0",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
         "php-amqplib/php-amqplib": "^3.7"
     }
 }
