@@ -4,8 +4,15 @@ require_once __DIR__ . '/RabbitMQ.php';
 
 class Messenger
 {
+    // Added static property to prevent running SHOW COLUMNS multiple times per request
+    private static bool $schemaChecked = false;
+
     private static function ensureDeliveryColumn(): void
     {
+        if (self::$schemaChecked) {
+            return;
+        }
+
         $pdo = Database::connect();
 
         try {
@@ -16,6 +23,8 @@ class Messenger
                 $pdo->exec('ALTER TABLE chat_messages ADD COLUMN delivered_at DATETIME NULL');
                 $pdo->exec('UPDATE chat_messages SET delivered_at = created_at WHERE delivered_at IS NULL');
             }
+            
+            self::$schemaChecked = true;
         } catch (Throwable $error) {
             // Keep messenger usable even if ALTER permission is limited.
         }
@@ -59,9 +68,11 @@ class Messenger
                 JOIN conversation_members m ON m.conversation_id = c.id
                 WHERE m.user_id = ?
                 ORDER BY COALESCE(last_time, c.created_at) DESC';
+                
         $statement = Database::connect()->prepare($sql);
         $statement->execute([$userId, $userId, $userId, $userId]);
-        return $statement->fetchAll();
+        
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function unreadCount(int $userId): int
@@ -76,7 +87,9 @@ class Messenger
                AND cm.delivered_at IS NOT NULL
                AND cm.id > COALESCE(m.last_read_message_id, 0)'
         );
+        
         $statement->execute([$userId, $userId]);
+        
         return (int) $statement->fetchColumn();
     }
 
@@ -86,31 +99,40 @@ class Messenger
             'SELECT c.* FROM conversations c JOIN conversation_members m ON m.conversation_id = c.id WHERE c.id = ? AND m.user_id = ? LIMIT 1'
         );
         $statement->execute([$conversationId, $userId]);
-        $conversation = $statement->fetch();
+        
+        $conversation = $statement->fetch(PDO::FETCH_ASSOC);
+        
         return $conversation ?: null;
     }
 
     public static function messages(int $conversationId, int $userId): array
     {
         self::ensureDeliveryColumn();
+        
         if (!self::findConversation($conversationId, $userId)) {
             return [];
         }
 
         $statement = Database::connect()->prepare(
-            'SELECT cm.*, u.fullname, u.avatar FROM chat_messages cm JOIN users u ON u.id = cm.sender_id WHERE cm.conversation_id = ? AND (cm.sender_id = ? OR cm.delivered_at IS NOT NULL) ORDER BY cm.created_at ASC'
+            'SELECT cm.*, u.fullname, u.avatar 
+             FROM chat_messages cm 
+             JOIN users u ON u.id = cm.sender_id 
+             WHERE cm.conversation_id = ? AND (cm.sender_id = ? OR cm.delivered_at IS NOT NULL) 
+             ORDER BY cm.created_at ASC'
         );
         $statement->execute([$conversationId, $userId]);
-        $messages = $statement->fetchAll();
+        $messages = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-        $lastId = 0;
-        foreach ($messages as $message) {
-            $lastId = max($lastId, (int) $message['id']);
+        if (!empty($messages)) {
+            $lastId = 0;
+            foreach ($messages as $message) {
+                $lastId = max($lastId, (int) $message['id']);
+            }
+
+            Database::connect()->prepare(
+                'UPDATE conversation_members SET last_read_message_id = ? WHERE conversation_id = ? AND user_id = ?'
+            )->execute([$lastId, $conversationId, $userId]);
         }
-
-        Database::connect()->prepare(
-            'UPDATE conversation_members SET last_read_message_id = ? WHERE conversation_id = ? AND user_id = ?'
-        )->execute([$lastId, $conversationId, $userId]);
 
         return $messages;
     }
@@ -118,6 +140,7 @@ class Messenger
     public static function send(int $conversationId, int $senderId, string $body): void
     {
         self::ensureDeliveryColumn();
+        
         $body = trim($body);
         if ($body === '') {
             throw new InvalidArgumentException('Message cannot be empty.');
@@ -135,11 +158,7 @@ class Messenger
 
         $messageId = (int) $pdo->lastInsertId();
 
-        $receiverStatement = $pdo->prepare(
-            'SELECT user_id FROM conversation_members WHERE conversation_id = ? AND user_id != ?'
-        );
-        $receiverStatement->execute([$conversationId, $senderId]);
-        $receiverIds = array_map('intval', $receiverStatement->fetchAll(PDO::FETCH_COLUMN));
+        // Removed the duplicate query block that was here
         $receiverStatement = $pdo->prepare(
             'SELECT user_id FROM conversation_members WHERE conversation_id = ? AND user_id != ?'
         );
@@ -154,8 +173,7 @@ class Messenger
             'created_at' => date('Y-m-d H:i:s'),
             'source' => 'AidLink Messenger',
         ], $receiverIds);
-
-}
+    }
 
     public static function createConversation(string $title, array $memberIds, int $creatorId, bool $isGroup): int
     {
@@ -197,22 +215,31 @@ class Messenger
             }
         }
 
-        $statement = $pdo->prepare(
-            'INSERT INTO conversations (title, is_group, created_by) VALUES (?, ?, ?)'
-        );
-        $statement->execute([$title, $isGroup ? 1 : 0, $creatorId]);
-        $conversationId = (int) $pdo->lastInsertId();
+        try {
+            // Added Database Transaction for data integrity
+            $pdo->beginTransaction();
 
-        $memberInsert = $pdo->prepare(
-            'INSERT INTO conversation_members (conversation_id, user_id) VALUES (?, ?)'
-        );
-        foreach ($memberIds as $memberId) {
-            $memberInsert->execute([$conversationId, $memberId]);
+            $statement = $pdo->prepare(
+                'INSERT INTO conversations (title, is_group, created_by) VALUES (?, ?, ?)'
+            );
+            $statement->execute([$title, $isGroup ? 1 : 0, $creatorId]);
+            $conversationId = (int) $pdo->lastInsertId();
+
+            $memberInsert = $pdo->prepare(
+                'INSERT INTO conversation_members (conversation_id, user_id) VALUES (?, ?)'
+            );
+            foreach ($memberIds as $memberId) {
+                $memberInsert->execute([$conversationId, $memberId]);
+            }
+
+            $pdo->commit();
+            return $conversationId;
+
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
         }
-
-        return $conversationId;
     }
-
 
     public static function findOrCreateDirect(int $creatorId, string $lookup): int
     {
@@ -257,7 +284,7 @@ class Messenger
              LIMIT 1'
         );
         $statement->execute([$currentUserId, $like, $like, $like]);
-        $user = $statement->fetch();
+        $user = $statement->fetch(PDO::FETCH_ASSOC);
 
         return $user ?: null;
     }
@@ -272,6 +299,7 @@ class Messenger
 
         $memberIds = array_values(array_unique(array_map('intval', $memberIds)));
         $pdo = Database::connect();
+        
         $insert = $pdo->prepare('INSERT IGNORE INTO conversation_members (conversation_id, user_id) VALUES (?, ?)');
 
         foreach ($memberIds as $memberId) {
@@ -281,7 +309,6 @@ class Messenger
         }
     }
 
-
     public static function deleteMessage(int $messageId, int $userId): void
     {
         $pdo = Database::connect();
@@ -289,7 +316,8 @@ class Messenger
         $statement = $pdo->prepare(
             'UPDATE chat_messages SET body = ? WHERE id = ? AND sender_id = ?'
         );
-        $statement->execute(['Message deleted', $messageId, $userId]);
+        // Added standard deletion message
+        $statement->execute(['This message was deleted', $messageId, $userId]);
     }
 
     public static function members(int $conversationId): array
@@ -302,7 +330,8 @@ class Messenger
              ORDER BY u.fullname ASC'
         );
         $statement->execute([$conversationId]);
-        return $statement->fetchAll();
+        
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function availableUsers(int $currentUserId): array
@@ -311,6 +340,7 @@ class Messenger
             'SELECT id, fullname, email, phone, role FROM users WHERE id <> ? ORDER BY fullname ASC'
         );
         $statement->execute([$currentUserId]);
-        return $statement->fetchAll();
+        
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 }
